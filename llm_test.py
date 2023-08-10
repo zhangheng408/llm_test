@@ -29,12 +29,12 @@ Configs = [
     (8, 128, 8),
     (16, 128, 8),
     (32, 128, 8),
-    # (64, 128, 8),
+    # (64, 128, 8), # OOM
     (1, 512, 32),
     (2, 512, 32),
     (4, 512, 32),
     (8, 512, 32),
-    (16, 512, 32),
+    # (16, 512, 32), # OOM
 ]
 
 
@@ -59,6 +59,7 @@ def main():
 
     print('batch\tinput_length\toutput_length\tlatency\t1tokenlatency\tthroughput')
     for batch, input_length, output_length in Configs:
+        torch.cuda.empty_cache()
         torch.cuda.nvtx.range_push('batch {} input_length {} output_length {}'.format(batch, input_length, output_length))
         # prepare inputs
         inputs = [prefix_str] * batch
@@ -78,8 +79,9 @@ def main():
         torch.cuda.nvtx.range_pop()
 
         ms_per_token = ms / output_length  # amd not consider batch
-        token_per_sec = 1000 / ms_per_token
+        token_per_sec = 1000 / ms_per_token * batch
         print('{} {} {} {:.2f} {:.2f} {:.2f}'.format(batch, input_length, output_length, ms, ms_per_token, token_per_sec))
+        del inputs, input_ids, logits
 
 if __name__ == "__main__":
     main()
