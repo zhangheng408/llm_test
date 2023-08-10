@@ -1,6 +1,3 @@
-import argparse
-import os
-
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -38,20 +35,17 @@ Configs = [
 ]
 
 
-def main():
-    parser = argparse.ArgumentParser(description = "test llm")
-    parser.add_argument("--gpu", type=int, default=0, help="id of the applied gpu device")
-    parser.add_argument("--model-name", default='bigscience/bloom-7b1')
-    args = parser.parse_args()
+def main(model_name, gpu=0):
+    torch.cuda.empty_cache()
+    print('\n', model_name, '\n')
 
     if torch.cuda.is_available():
-        device = torch.device("cuda:{}".format(args.gpu))
+        device = torch.device("cuda:{}".format(gpu))
     else:
         device = torch.device("cpu")
 
-    name = args.model_name
-    tokenizer = AutoTokenizer.from_pretrained(name, trust_remote_code = True)
-    model = AutoModelForCausalLM.from_pretrained(name, trust_remote_code = True).half().to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code = True)
+    model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code = True).half().to(device)
 
     st = torch.cuda.Event(enable_timing=True)
     ed = torch.cuda.Event(enable_timing=True)
@@ -84,4 +78,5 @@ def main():
         del inputs, input_ids, logits
 
 if __name__ == "__main__":
-    main()
+    main('bigscience/bloom-7b1')
+    main('facebook/opt-6.7b')
