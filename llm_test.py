@@ -26,12 +26,12 @@ Configs = [
     (8, 128, 8),
     (16, 128, 8),
     (32, 128, 8),
-    # (64, 128, 8), # OOM
+    (64, 128, 8), # bloom OOM
     (1, 512, 32),
     (2, 512, 32),
     (4, 512, 32),
     (8, 512, 32),
-    # (16, 512, 32), # OOM
+    (16, 512, 32), # bloom OOM
 ]
 
 
@@ -49,10 +49,12 @@ def main(model_name, gpu=0):
 
     st = torch.cuda.Event(enable_timing=True)
     ed = torch.cuda.Event(enable_timing=True)
-    freq = 20
+    freq = 5
 
     print('batch\tinput_length\toutput_length\tlatency\t1tokenlatency\tthroughput')
     for batch, input_length, output_length in Configs:
+        if batch * input_length >= 4096 and model_name == 'bigscience/bloom-7b1':
+            continue
         torch.cuda.empty_cache()
         torch.cuda.nvtx.range_push('batch {} input_length {} output_length {}'.format(batch, input_length, output_length))
         # prepare inputs
@@ -61,7 +63,7 @@ def main(model_name, gpu=0):
         max_length = input_length + output_length
 
         # warm up
-        for _ in range(5):
+        for _ in range(2):
             logits = model.generate(input_ids, num_beams=1, max_length=max_length, use_cache=True)
 
         st.record()
