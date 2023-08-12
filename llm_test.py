@@ -49,7 +49,7 @@ def main(model_name, gpu=0):
 
     st = torch.cuda.Event(enable_timing=True)
     ed = torch.cuda.Event(enable_timing=True)
-    freq = 5
+    warmup, freq = 2, 5
 
     print('batch\tinput_length\toutput_length\tlatency\t1tokenlatency\tthroughput')
     for batch, input_length, output_length in Configs:
@@ -63,7 +63,7 @@ def main(model_name, gpu=0):
         max_length = input_length + output_length
 
         # warm up
-        for _ in range(2):
+        for _ in range(warmup):
             logits = model.generate(input_ids, num_beams=1, max_length=max_length, use_cache=True)
 
         st.record()
@@ -76,7 +76,7 @@ def main(model_name, gpu=0):
 
         ms_per_token = ms / output_length  # amd not consider batch
         token_per_sec = 1000 / ms_per_token * batch
-        print('{} {} {} {:.2f} {:.2f} {:.2f}'.format(batch, input_length, output_length, ms, ms_per_token, token_per_sec))
+        print('{}\t{}\t{}\t{:.2f}\t{:.2f}\t{:.2f}'.format(batch, input_length, output_length, ms, ms_per_token, token_per_sec))
         del inputs, input_ids, logits
 
 if __name__ == "__main__":
