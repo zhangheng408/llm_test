@@ -3,7 +3,7 @@ import torch
 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 
 
-def test_sd2(model_id, num_inference_steps=100):
+def test_sd2(model_id, num_inference_steps=10):
     # Use the DPMSolverMultistepScheduler (DPM-Solver++) scheduler here instead
     retry = 5
     while retry >= 5:
@@ -23,7 +23,7 @@ def test_sd2(model_id, num_inference_steps=100):
 
     st = torch.cuda.Event(enable_timing=True)
     ed = torch.cuda.Event(enable_timing=True)
-    warmup, freq = 2, 5
+    warmup, freq = 1, 1
 
     # warm up
     for _ in range(warmup):
@@ -42,5 +42,3 @@ def test_sd2(model_id, num_inference_steps=100):
 
 if __name__ == '__main__':
     test_sd2('stabilityai/stable-diffusion-2-1-base')
-    test_sd2('stabilityai/stable-diffusion-2-1')
-    test_sd2('runwayml/stable-diffusion-v1-5')

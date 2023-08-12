@@ -20,18 +20,13 @@ He watched the flying fish burst out again and again and the ineffectual movemen
 
 Configs = [
     # batch, input_length, output_length
+    (32, 128, 8),
     (1, 128, 8),
     (2, 128, 8),
     (4, 128, 8),
     (8, 128, 8),
     (16, 128, 8),
     (32, 128, 8),
-    (64, 128, 8), # bloom OOM
-    (1, 512, 32),
-    (2, 512, 32),
-    (4, 512, 32),
-    (8, 512, 32),
-    (16, 512, 32), # bloom OOM
 ]
 
 
@@ -49,7 +44,7 @@ def main(model_name, gpu=0):
 
     st = torch.cuda.Event(enable_timing=True)
     ed = torch.cuda.Event(enable_timing=True)
-    warmup, freq = 2, 5
+    warmup, freq = 0, 1
 
     print('batch\tinput_length\toutput_length\tlatency\t1tokenlatency\tthroughput')
     for batch, input_length, output_length in Configs:
@@ -81,4 +76,3 @@ def main(model_name, gpu=0):
 
 if __name__ == "__main__":
     main('bigscience/bloom-7b1')
-    main('facebook/opt-6.7b')

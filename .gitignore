@@ -1,6 +1,9 @@
 result/
-profile/
+rpl_data*
 *.bin
 *.swp
 *.bin
 *.json
+*.db
+*.csv
+*.sysinfo.txt
