@@ -51,7 +51,7 @@ def main(model_name, gpu=0):
     ed = torch.cuda.Event(enable_timing=True)
     warmup, freq = 2, 5
 
-    print('batch\tinput_length\toutput_length\tlatency\t1tokenlatency\tthroughput')
+    print("batch, query_length, answer_length, query_latency(ms), answer_latency(ms), total_latency(ms), 1-token_output_latency(ms), tokens/second")
     for batch, input_length, output_length in Configs:
         if batch * input_length > 4096 and model_name == 'bigscience/bloom-7b1':
             continue
