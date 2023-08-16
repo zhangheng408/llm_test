@@ -53,7 +53,7 @@ def main(model_name, gpu=0):
 
     print('batch\tinput_length\toutput_length\tlatency\t1tokenlatency\tthroughput')
     for batch, input_length, output_length in Configs:
-        if batch * input_length >= 4096 and model_name == 'bigscience/bloom-7b1':
+        if batch * input_length > 4096 and model_name == 'bigscience/bloom-7b1':
             continue
         torch.cuda.empty_cache()
         torch.cuda.nvtx.range_push('{} batch {} input_length {} output_length {}'.format(model_name, batch, input_length, output_length))
@@ -68,16 +68,32 @@ def main(model_name, gpu=0):
 
         st.record()
         for _ in range(freq):
-            logits = model.generate(input_ids, num_beams=1, max_length=max_length, use_cache=True)
+            logits = model.generate(input_ids, num_beams=1, max_length=input_length+1, use_cache=True)
         ed.record()
         ed.synchronize()
-        ms = st.elapsed_time(ed) / freq
+        query_latency = st.elapsed_time(ed) / freq
+
+        st.record()
+        for _ in range(freq):
+            logits = model.generate(input_ids, num_beams=1, max_length=input_length+output_length+1, use_cache=True)
+        ed.record()
+        ed.synchronize()
+        total_latency = st.elapsed_time(ed) / freq
         torch.cuda.nvtx.range_pop()
 
-        ms_per_token = ms / output_length  # amd not consider batch
-        token_per_sec = 1000 / ms_per_token * batch
-        print('{}\t{}\t{}\t{:.2f}\t{:.2f}\t{:.2f}'.format(batch, input_length, output_length, ms, ms_per_token, token_per_sec))
-        del inputs, input_ids, logits
+        answer_lantency = total_latency - query_latency
+        token_output_latency = answer_lantency / output_length
+        tokens_per_second = (1000 / token_output_latency) * batch
+
+        print(str(batch).rjust(len('batch')) + ", " +
+                str(input_length).rjust(len('query_length')) + ", " +
+                str(output_length).rjust(len('answer_length')) + ", " +
+                "{:.0f}".format(query_latency).rjust(len('query_latency(ms)')) + ", " +
+                "{:.0f}".format(answer_lantency).rjust(len('answer_latency(ms)')) +  ", " +
+                "{:.0f}".format(total_latency).rjust(len('total_latency(ms)')) + ", " +
+                "{:.0f}".format(token_output_latency).rjust(len('1-token_output_latency(ms)')) + ", " +
+                "{:.0f}".format(tokens_per_second).rjust(len('tokens_second'))) 
+
 
 if __name__ == "__main__":
     main('bigscience/bloom-7b1')
